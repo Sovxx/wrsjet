@@ -51,7 +51,7 @@ def create_aircraft_trajectories(csv_file_path):
                 
                 if time_gap > timedelta(minutes=30):
                     # Save current trajectory and start new one
-                    if len(current_trajectory) > 1:  # Only save if trajectory has multiple points
+                    if len(current_trajectory) >= 1:  # Save even single points
                         trajectories.append(current_trajectory.copy())
                     current_trajectory = []
             
@@ -68,7 +68,7 @@ def create_aircraft_trajectories(csv_file_path):
             })
         
         # Don't forget the last trajectory
-        if len(current_trajectory) > 1:
+        if len(current_trajectory) >= 1:  # Save even single points
             trajectories.append(current_trajectory)
     
     return trajectories
@@ -91,10 +91,41 @@ def create_map(trajectories):
     
     # Add trajectories to map
     for i, trajectory in enumerate(trajectories):
-        if len(trajectory) < 2:
+        if len(trajectory) < 1:  # Skip empty trajectories
             continue
         
-        # Create coordinates for polyline
+        # Handle single point trajectories
+        if len(trajectory) == 1:
+            point = trajectory[0]
+            
+            # Create a marker for single point
+            popup_content = f"""
+            <div style="width: 200px;">
+                <b>Single Point {i+1}</b><br>
+                <b>Callsign:</b> {point['callsign']}<br>
+                <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/{start_point['registration']}" target="_blank">{start_point['registration']}</a><br>
+                <b>Aircraft Type:</b> {point['aircraft_type']}<br>
+                <b>Timestamp:</b> {point['timestamp']}<br>
+                <b>Altitude:</b> {point['altitude']} ft<br>
+            </div>
+            """
+            
+            # Get color based on altitude
+            point_color = get_altitude_color(point['altitude'])
+            
+            folium.CircleMarker(
+                location=[point['lat'], point['lon']],
+                radius=8,
+                popup=folium.Popup(popup_content, max_width=300),
+                color=point_color,
+                fill=True,
+                fillColor=point_color,
+                fillOpacity=0.8
+            ).add_to(m)
+            
+            continue
+        
+        # Create coordinates for polyline (multiple points)
         coordinates = [[point['lat'], point['lon']] for point in trajectory]
         
         # Get average altitude for color
@@ -117,7 +148,7 @@ def create_map(trajectories):
         <div style="width: 200px;">
             <b>Trajectory {i+1}</b><br>
             <b>Callsign:</b> {start_point['callsign']}<br>
-            <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/{start_point['registration']}" target="_blank">{start_point['registration']}</a><br>
+            <b>Registration:</b> {start_point['registration']}<br>
             <b>Aircraft Type:</b> {start_point['aircraft_type']}<br>
             <b>Start Time:</b> {start_point['timestamp']}<br>
             <b>End Time:</b> {end_point['timestamp']}<br>
