@@ -1,0 +1,9 @@
+wrsjet
+https://github.com/Sovxx/wrsjet
+
+Record aicrafts around a set location using https://adsb.lol data.
+
+* Install python 3+
+* Install the libraries listed in requirements.txt
+* Setup config.ini
+* Start main.py
