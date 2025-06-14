@@ -154,9 +154,9 @@ if __name__ == "__main__":
     except FileExistsError:
         pass
 
-    print(f"{CALLSIGN_BLACKLIST=}")
-    print(f"{REGIS_BLACKLIST=}")
-    print(f"{DESC_BLACKLIST=}")
+    print(f"{sorted(CALLSIGN_BLACKLIST)=}")
+    print(f"{sorted(REGIS_BLACKLIST)=}")
+    print(f"{sorted(DESC_BLACKLIST)=}")
     print(
         f"📡 Monitoring airspace within {RADIUS} NM from https://www.openstreetmap.org/#map=9/{LAT}/{LON} between {MIN_ALT} and {MAX_ALT} ft"
     )
