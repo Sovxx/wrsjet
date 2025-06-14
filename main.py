@@ -83,13 +83,9 @@ def check_aircraft() -> bool:
             lon = ac.get("lon")
             track = (
                 None if (ac.get("track") is None) else int(round(ac.get("track")))
-            )  # degrees
-            dist = get_distance(
-                LAT, LON, lat, lon
-            )  # Distance of aircraft from surveillance point in NM
-            azimuth = int(
-                round(get_azimuth(LAT, LON, lat, lon))
-            )  # Azimuth of aircraft from surveillance point in degrees
+            )  # aircraft own track in degrees
+            dist = get_distance(LAT, LON, lat, lon)
+            azimuth = get_azimuth(LAT, LON, lat, lon)  # from surveillance point
 
             if not (MIN_ALT <= alt <= MAX_ALT):
                 continue

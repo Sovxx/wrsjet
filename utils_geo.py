@@ -18,10 +18,10 @@ def get_distance(lat1, lon1, lat2, lon2) -> float:
     return round(distance_nm, 2)
 
 
-def get_azimuth(lat1, lon1, lat2, lon2) -> float:
+def get_azimuth(lat1, lon1, lat2, lon2) -> int:
     """
     Returns:
-        float: Azimuth of point 2 seen from point 1
+        int: Azimuth of point 2 seen from point 1
     """
     if None in (lat1, lon1, lat2, lon2):
         return None
@@ -34,4 +34,4 @@ def get_azimuth(lat1, lon1, lat2, lon2) -> float:
     azimuth = g["azi1"]  # +/- from North (ex : -45 = NW)
     if azimuth < 0:
         azimuth += 360  # aeronautical (ex: 315 = NW)
-    return azimuth
+    return int(round(azimuth))
