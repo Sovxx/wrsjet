@@ -1,2 +1,0 @@
-2025-06-14 18:05:45,298 - ERROR - API error: '<=' not supported between instances of 'int' and 'str'
-2025-06-14 18:18:19,448 - ERROR - API error: 'float' object is not callable
