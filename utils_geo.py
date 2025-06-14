@@ -8,6 +8,10 @@ def get_distance(lat1, lon1, lat2, lon2) -> float:
     """
     if None in (lat1, lon1, lat2, lon2):
         return None
+    if not all(isinstance(angle, float) for angle in [lat1, lon1, lat2, lon2]):
+        raise TypeError(f"Arguments for get_distance must be float or None, not \
+                        {type(lat1).__name__} {type(lon1).__name__} \
+                        {type(lat2).__name__} {type(lon2).__name__}.")
     if not all(-90 <= lat <= 90 for lat in [lat1, lat2]):
         raise ValueError("Latitude must be between -90 and 90°")
     if not all(-180 <= lon <= 180 for lon in [lon1, lon2]):
@@ -25,6 +29,10 @@ def get_azimuth(lat1, lon1, lat2, lon2) -> int:
     """
     if None in (lat1, lon1, lat2, lon2):
         return None
+    if not all(isinstance(angle, float) for angle in [lat1, lon1, lat2, lon2]):
+        raise TypeError(f"Arguments for get_azimuth must be float or None, not \
+                        {type(lat1).__name__} {type(lon1).__name__} \
+                        {type(lat2).__name__} {type(lon2).__name__}.")
     if not all(-90 <= lat <= 90 for lat in [lat1, lat2]):
         raise ValueError("Latitude must be between -90 and 90°")
     if not all(-180 <= lon <= 180 for lon in [lon1, lon2]):

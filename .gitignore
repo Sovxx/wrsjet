@@ -1,5 +1,6 @@
 __pycache__
 .venv
 
-records.csv
-error.log
+*.csv
+*.log
+*.html

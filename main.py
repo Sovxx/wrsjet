@@ -87,8 +87,9 @@ def check_aircraft() -> bool:
             dist = get_distance(LAT, LON, lat, lon)
             azimuth = get_azimuth(LAT, LON, lat, lon)  # from surveillance point
 
-            if not (MIN_ALT <= alt <= MAX_ALT):
-                continue
+            if alt:
+                if not (MIN_ALT <= alt <= MAX_ALT):
+                    continue  # skip this aircraft
 
             if callsign:
                 if any(callsign.startswith(prefix) for prefix in CALLSIGN_BLACKLIST):
@@ -128,29 +129,29 @@ if __name__ == "__main__":
 
     type_data = fetch_icao_type_descriptions()
     if get_type_description("A320", type_data) != "L2J":
-        raise ValueError("ICAO database unusable")
+        raise ValueError("ICAO type descriptions database is unusable")
+
+    header = [
+            "timestamp",
+            "callsign",
+            "regis",
+            "hex",
+            "type",
+            "desc",
+            "alt",
+            "vspeed",
+            "lat",
+            "lon",
+            "track",
+            "dist",
+            "azimuth",
+        ]
 
     # Create csv header line if csv file does not exist
     try:
         with open(CSV_FILE, "x", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(
-                [
-                    "timestamp",
-                    "callsign",
-                    "regis",
-                    "hex",
-                    "type",
-                    "desc",
-                    "alt",
-                    "vspeed",
-                    "lat",
-                    "lon",
-                    "track",
-                    "dist",
-                    "azimuth",
-                ]
-            )
+            writer.writerow(header)
     except FileExistsError:
         pass
 
@@ -160,6 +161,7 @@ if __name__ == "__main__":
     print(
         f"📡 Monitoring airspace within {RADIUS} NM from https://www.openstreetmap.org/#map=9/{LAT}/{LON} between {MIN_ALT} and {MAX_ALT} ft"
     )
+    print(f"Format: {header}")
 
     while True:
         delay = 10 if check_aircraft() else 60

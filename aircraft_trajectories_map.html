@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_e4a1643a20688751ce5f2c90e5b37a21 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+    <div style="position: fixed; 
+                top: 10px; right: 10px; width: 150px; height: 90px; 
+                background-color: white; border:2px solid grey; z-index:9999; 
+                font-size:12px; padding: 10px;">
+    <p><b>Altitude Legend</b></p>
+    <p><i class="fa fa-square" style="color:green"></i> 0 ft</p>
+    <p><i class="fa fa-square" style="color:red"></i> 10,000 ft</p>
+    <p>Gradient: Low → High</p>
+    </div>
+    
+    
+            <div class="folium-map" id="map_e4a1643a20688751ce5f2c90e5b37a21" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_e4a1643a20688751ce5f2c90e5b37a21 = L.map(
+                "map_e4a1643a20688751ce5f2c90e5b37a21",
+                {
+                    center: [48.738526642857146, 2.6022062142857143],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 10,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_f2c6f312c3e8ce7ae3d515c05ae0e957 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_f2c6f312c3e8ce7ae3d515c05ae0e957.addTo(map_e4a1643a20688751ce5f2c90e5b37a21);
+        
+    
+            var poly_line_f1f2fcc621c932b26e9e4c4bdd38b906 = L.polyline(
+                [[48.746521, 2.809542], [48.752884, 2.803133], [48.764726, 2.78301], [48.769455, 2.767076]],
+                {"bubblingMouseEvents": true, "color": "#788600", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#788600", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 3}
+            ).addTo(map_e4a1643a20688751ce5f2c90e5b37a21);
+        
+    
+            var marker_7815c32885a19729c8e6c89fac4c2bcd = L.marker(
+                [48.764726, 2.78301],
+                {
+}
+            ).addTo(map_e4a1643a20688751ce5f2c90e5b37a21);
+        
+    
+            var icon_a5470e2d83493851b6ae9bc9546706ca = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plane",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_65da1aad05fbde70bba681c9c47bb807 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_60cab5d8eed184c7ce9a5d49556159b7 = $(`<div id="html_60cab5d8eed184c7ce9a5d49556159b7" style="width: 100.0%; height: 100.0%;">         <div style="width: 200px;">             <b>Trajectory 1</b><br>             <b>Callsign:</b> N/A<br>             <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/TS-IMW" target="_blank">TS-IMW</a><br>             <b>Aircraft Type:</b> A320<br>             <b>Start Time:</b> 2025-06-14T18:23:18<br>             <b>End Time:</b> 2025-06-14T18:23:49<br>             <b>Avg Altitude:</b> 4719 ft<br>             <b>Points:</b> 4         </div>         </div>`)[0];
+                popup_65da1aad05fbde70bba681c9c47bb807.setContent(html_60cab5d8eed184c7ce9a5d49556159b7);
+            
+        
+
+        marker_7815c32885a19729c8e6c89fac4c2bcd.bindPopup(popup_65da1aad05fbde70bba681c9c47bb807)
+        ;
+
+        
+    
+    
+                marker_7815c32885a19729c8e6c89fac4c2bcd.setIcon(icon_a5470e2d83493851b6ae9bc9546706ca);
+            
+    
+            var circle_marker_243ecd7f3d6126bc93af609f8c8658f7 = L.circleMarker(
+                [48.746521, 2.809542],
+                {"bubblingMouseEvents": true, "color": "green", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "green", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_e4a1643a20688751ce5f2c90e5b37a21);
+        
+    
+        var popup_6666028cd37c983d88d029cd28cc2261 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_18deaadebfe78878b6b36c46ea3b6d03 = $(`<div id="html_18deaadebfe78878b6b36c46ea3b6d03" style="width: 100.0%; height: 100.0%;">Start - Alt: 4900 ft</div>`)[0];
+                popup_6666028cd37c983d88d029cd28cc2261.setContent(html_18deaadebfe78878b6b36c46ea3b6d03);
+            
+        
+
+        circle_marker_243ecd7f3d6126bc93af609f8c8658f7.bindPopup(popup_6666028cd37c983d88d029cd28cc2261)
+        ;
+
+        
+    
+    
+            var circle_marker_2a576c77a1ef26eb03fb3eec5f970de4 = L.circleMarker(
+                [48.769455, 2.767076],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_e4a1643a20688751ce5f2c90e5b37a21);
+        
+    
+        var popup_18eeb396c1b1e8baa3b341e6e4b8ffb8 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_11312962b8620ebedf6cad65c507f10b = $(`<div id="html_11312962b8620ebedf6cad65c507f10b" style="width: 100.0%; height: 100.0%;">End - Alt: 4525 ft</div>`)[0];
+                popup_18eeb396c1b1e8baa3b341e6e4b8ffb8.setContent(html_11312962b8620ebedf6cad65c507f10b);
+            
+        
+
+        circle_marker_2a576c77a1ef26eb03fb3eec5f970de4.bindPopup(popup_18eeb396c1b1e8baa3b341e6e4b8ffb8)
+        ;
+
+        
+    
+    
+            var poly_line_c841f51327a394be0ba71d97f0f2bd57 = L.polyline(
+                [[48.697505, 2.58504], [48.701322, 2.578607], [48.713562, 2.558054], [48.718369, 2.549814], [48.723587, 2.540729], [48.723587, 2.540729], [48.744662, 2.504666], [48.754857, 2.485584], [48.761353, 2.469529], [48.766983, 2.455374]],
+                {"bubblingMouseEvents": true, "color": "#49b500", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#49b500", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.8, "smoothFactor": 1.0, "stroke": true, "weight": 3}
+            ).addTo(map_e4a1643a20688751ce5f2c90e5b37a21);
+        
+    
+            var marker_00163892a60d1a19ec163805e46da766 = L.marker(
+                [48.723587, 2.540729],
+                {
+}
+            ).addTo(map_e4a1643a20688751ce5f2c90e5b37a21);
+        
+    
+            var icon_f157facf18a2ac81f886e54624ad333c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plane",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_6bfdda5b7a35eb8b7d2c71fc32998df9 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_ae4771685997eab799f1741e6478376d = $(`<div id="html_ae4771685997eab799f1741e6478376d" style="width: 100.0%; height: 100.0%;">         <div style="width: 200px;">             <b>Trajectory 2</b><br>             <b>Callsign:</b> JFA08G  <br>             <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/LX-PCL" target="_blank">LX-PCL</a><br>             <b>Aircraft Type:</b> PC24<br>             <b>Start Time:</b> 2025-06-14T19:01:32<br>             <b>End Time:</b> 2025-06-14T19:03:04<br>             <b>Avg Altitude:</b> 2870 ft<br>             <b>Points:</b> 10         </div>         </div>`)[0];
+                popup_6bfdda5b7a35eb8b7d2c71fc32998df9.setContent(html_ae4771685997eab799f1741e6478376d);
+            
+        
+
+        marker_00163892a60d1a19ec163805e46da766.bindPopup(popup_6bfdda5b7a35eb8b7d2c71fc32998df9)
+        ;
+
+        
+    
+    
+                marker_00163892a60d1a19ec163805e46da766.setIcon(icon_f157facf18a2ac81f886e54624ad333c);
+            
+    
+            var circle_marker_6d678eb614e295fecb35063ff8012462 = L.circleMarker(
+                [48.697505, 2.58504],
+                {"bubblingMouseEvents": true, "color": "green", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "green", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_e4a1643a20688751ce5f2c90e5b37a21);
+        
+    
+        var popup_f12899fc0535c6478699b9734bf79488 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_03979762051bd5dc6fee3fc2e45b87be = $(`<div id="html_03979762051bd5dc6fee3fc2e45b87be" style="width: 100.0%; height: 100.0%;">Start - Alt: 2900 ft</div>`)[0];
+                popup_f12899fc0535c6478699b9734bf79488.setContent(html_03979762051bd5dc6fee3fc2e45b87be);
+            
+        
+
+        circle_marker_6d678eb614e295fecb35063ff8012462.bindPopup(popup_f12899fc0535c6478699b9734bf79488)
+        ;
+
+        
+    
+    
+            var circle_marker_eeaf16a666c1620ad7d54a6b7ff6ca8f = L.circleMarker(
+                [48.766983, 2.455374],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_e4a1643a20688751ce5f2c90e5b37a21);
+        
+    
+        var popup_c998a579ee1c51043e9cb8ef853a8e88 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_a52d23d5e221bb719d7e9bd069b0f03d = $(`<div id="html_a52d23d5e221bb719d7e9bd069b0f03d" style="width: 100.0%; height: 100.0%;">End - Alt: 2875 ft</div>`)[0];
+                popup_c998a579ee1c51043e9cb8ef853a8e88.setContent(html_a52d23d5e221bb719d7e9bd069b0f03d);
+            
+        
+
+        circle_marker_eeaf16a666c1620ad7d54a6b7ff6ca8f.bindPopup(popup_c998a579ee1c51043e9cb8ef853a8e88)
+        ;
+
+        
+    
+</script>
+</html>
