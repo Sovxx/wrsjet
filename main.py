@@ -3,10 +3,10 @@ import requests
 import csv
 import time
 from datetime import datetime
+import logging
 
 from utils_geo import get_distance, get_azimuth
 from utils_icao import fetch_icao_type_descriptions, get_type_description
-
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -24,10 +24,8 @@ if not (0 < RADIUS <= 250):
 MIN_ALT = int(config["altitude"]["min_alt"])
 MAX_ALT = int(config["altitude"]["max_alt"])
 
-
 def parse_set(s):
     return set(item.strip() for item in s.split(",") if item.strip())
-
 
 CALLSIGN_BLACKLIST = parse_set(config["filters"]["callsign_blacklist"])
 REGIS_BLACKLIST = parse_set(config["filters"]["regis_blacklist"])
@@ -43,12 +41,19 @@ example :
 curl -X 'GET' 'https://api.adsb.lol/v2/lat/48.6058/lon/2.6717/dist/5' -H 'accept: application/json'
 """
 
+logging.basicConfig(
+    level=logging.ERROR,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("error.log"),  # File handler
+        logging.StreamHandler()            # Stream handler for console output
+    ]
+)
 
 def save_csv(row):
     with open(CSV_FILE, "a", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(row)
-
 
 def check_aircraft() -> bool:
     """
@@ -120,9 +125,8 @@ def check_aircraft() -> bool:
         return excitation
 
     except Exception as e:
-        print(timestamp, "API error:", e)
+        logging.error("API error: %s", e)
         return False
-
 
 if __name__ == "__main__":
 
