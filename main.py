@@ -119,7 +119,7 @@ def check_aircraft() -> bool:
             save_csv(row)
 
             print("🛬 Aircraft detected :", row)
-            map.main()
+            map.main(verbose=False)
             if type != "L1P":
                 excitation = True
         return excitation
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     except FileExistsError:
         pass
 
-    map.main()
+    map.main(verbose=False)
 
     print(f"{sorted(CALLSIGN_BLACKLIST)=}")
     print(f"{sorted(REGIS_BLACKLIST)=}")

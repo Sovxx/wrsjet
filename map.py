@@ -162,24 +162,31 @@ def create_map(trajectories):
             
             continue
         
-        # Create coordinates for polyline (multiple points)
-        coordinates = [[point['lat'], point['lon']] for point in trajectory]
-        
-        # Get average altitude for color
-        avg_altitude = sum(point['altitude'] for point in trajectory) / len(trajectory)
-        trajectory_color = get_altitude_color(avg_altitude)
-        
-        # Create polyline
-        polyline = folium.PolyLine(
-            coordinates,
-            weight=3,
-            color=trajectory_color,
-            opacity=0.8
-        )
+        # Create segments with individual colors based on altitude
+        for j in range(len(trajectory) - 1):
+            start_point = trajectory[j]
+            end_point = trajectory[j + 1]
+            
+            # Use average altitude of the two points for segment color
+            segment_altitude = (start_point['altitude'] + end_point['altitude']) / 2
+            segment_color = get_altitude_color(segment_altitude)
+            
+            # Create segment coordinates
+            segment_coords = [[start_point['lat'], start_point['lon']], 
+                            [end_point['lat'], end_point['lon']]]
+            
+            # Create polyline for this segment
+            folium.PolyLine(
+                segment_coords,
+                weight=3,
+                color=segment_color,
+                opacity=0.8
+            ).add_to(m)
         
         # Create popup content with trajectory information
         start_point = trajectory[0]
         end_point = trajectory[-1]
+        avg_altitude = sum(point['altitude'] for point in trajectory) / len(trajectory)
         
         popup_content = f"""
         <div style="width: 200px;">
@@ -193,8 +200,6 @@ def create_map(trajectories):
             <b>Points:</b> {len(trajectory)}
         </div>
         """
-        
-        polyline.add_to(m)
         
         # Add popup to the middle of the trajectory
         mid_idx = len(trajectory) // 2
@@ -232,7 +237,7 @@ def create_map(trajectories):
                 background-color: white; border:2px solid grey; z-index:9999; 
                 font-size:12px; padding: 10px;">
     <p><b>Altitude Legend</b></p>
-    <p><i class="fa fa-square" style="color:red"></i> 10,000 ft</p>
+    <p><i class="fa fa-square" style="color:red"></i> 6,000+ ft</p>
     <p><i class="fa fa-square" style="color:green"></i> 0 ft</p>
     <p>Gradient: Low → High</p>
     <hr>
@@ -244,39 +249,46 @@ def create_map(trajectories):
     
     return m
 
-def main():
+def main(verbose=True):
     """Main function to process CSV and create map"""
     # Replace 'your_data.csv' with your actual CSV file path
     csv_file_path = 'records.csv'
     
     try:
         # Create trajectories from CSV data
-        print("Processing CSV data...")
+        if verbose:
+            print("Processing CSV data...")
         trajectories = create_aircraft_trajectories(csv_file_path)
-        print(f"Created {len(trajectories)} trajectories")
+        if verbose:
+            print(f"Created {len(trajectories)} trajectories")
         
         # Create map
-        print("Creating map...")
+        if verbose:
+            print("Creating map...")
         map_object = create_map(trajectories)
         
         # Save map
         output_file = 'aircraft_trajectories_map.html'
         map_object.save(output_file)
-        print(f"Map saved as {output_file}")
-        print(f"Reference circle: {RADIUS} NM radius centered on ({LAT}, {LON})")
+        if verbose:
+            print(f"Map saved as {output_file}")
+            print(f"Reference circle: {RADIUS} NM radius centered on ({LAT}, {LON})")
         
         # Print trajectory statistics
-        print("\nTrajectory Statistics:")
-        for i, traj in enumerate(trajectories):
-            print(f"Trajectory {i+1}: {len(traj)} points, "
-                  f"Callsign: {traj[0]['callsign']}, "
-                  f"Registration: {traj[0]['registration']}")
+        if verbose:
+            print("\nTrajectory Statistics:")
+            for i, traj in enumerate(trajectories):
+                print(f"Trajectory {i+1}: {len(traj)} points, "
+                      f"Callsign: {traj[0]['callsign']}, "
+                      f"Registration: {traj[0]['registration']}")
         
     except FileNotFoundError:
-        print(f"Error: CSV file '{csv_file_path}' not found.")
-        print("Please make sure the CSV file exists and update the file path in the script.")
+        if verbose:
+            print(f"Error: CSV file '{csv_file_path}' not found.")
+            print("Please make sure the CSV file exists and update the file path in the script.")
     except Exception as e:
-        print(f"Error processing data: {str(e)}")
+        if verbose:
+            print(f"Error processing data: {str(e)}")
 
 if __name__ == "__main__":
     main()
