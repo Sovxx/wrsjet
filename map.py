@@ -232,8 +232,8 @@ def create_map(trajectories):
                 background-color: white; border:2px solid grey; z-index:9999; 
                 font-size:12px; padding: 10px;">
     <p><b>Altitude Legend</b></p>
-    <p><i class="fa fa-square" style="color:green"></i> 0 ft</p>
     <p><i class="fa fa-square" style="color:red"></i> 10,000 ft</p>
+    <p><i class="fa fa-square" style="color:green"></i> 0 ft</p>
     <p>Gradient: Low → High</p>
     <hr>
     <p><b>Surveillance area</b></p>

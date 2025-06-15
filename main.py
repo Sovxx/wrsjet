@@ -8,6 +8,8 @@ import logging
 from utils_geo import get_distance, get_azimuth
 from utils_icao import fetch_icao_type_descriptions, get_type_description
 
+import map
+
 config = configparser.ConfigParser()
 config.read("config.ini")
 
@@ -117,6 +119,7 @@ def check_aircraft() -> bool:
             save_csv(row)
 
             print("🛬 Aircraft detected :", row)
+            map.main()
             if type != "L1P":
                 excitation = True
         return excitation
@@ -154,6 +157,8 @@ if __name__ == "__main__":
             writer.writerow(header)
     except FileExistsError:
         pass
+
+    map.main()
 
     print(f"{sorted(CALLSIGN_BLACKLIST)=}")
     print(f"{sorted(REGIS_BLACKLIST)=}")
