@@ -1,7 +1,21 @@
+import configparser
 import pandas as pd
 import folium
 from datetime import datetime, timedelta
 import json
+
+config = configparser.ConfigParser()
+config.read("config.ini")
+
+LAT = float(config["location"]["lat"])
+if not (-90 <= LAT <= 90):
+    raise ValueError("Latitude must be between -90 and 90°")
+LON = float(config["location"]["lon"])
+if not (-180 <= LON <= 180):
+    raise ValueError("Longitude must be between -180 and 180°")
+RADIUS = float(config["location"]["radius"])
+if not (0 < RADIUS <= 250):
+    raise ValueError("Longitude must be between 0 and 250 NM")
 
 def parse_timestamp(timestamp_str):
     """Parse timestamp string to datetime object"""
@@ -19,6 +33,10 @@ def get_altitude_color(altitude, min_alt=0, max_alt=6000):
         red = int(255 * ratio)
         green = int(255 * (1 - ratio))
         return f'#{red:02x}{green:02x}00'
+
+def nautical_miles_to_meters(nm):
+    """Convert nautical miles to meters"""
+    return nm * 1852  # 1 nautical mile = 1852 meters
 
 def create_aircraft_trajectories(csv_file_path):
     """
@@ -89,6 +107,25 @@ def create_map(trajectories):
         tiles='OpenStreetMap'
     )
     
+    # Add circle centered on LAT/LON with RADIUS in nautical miles
+    radius_meters = nautical_miles_to_meters(RADIUS)
+    folium.Circle(
+        location=[LAT, LON],
+        radius=radius_meters,
+        color='black',
+        fill=False,
+        weight=2,
+        opacity=0.8,
+        popup=f'Radius: {RADIUS} NM ({radius_meters:.0f} m)'
+    ).add_to(m)
+    
+    # Add center marker
+    folium.Marker(
+        location=[LAT, LON],
+        popup=f'Surveillance point<br>Lat: {LAT}<br>Lon: {LON}',
+        icon=folium.Icon(color='black', icon='crosshairs', prefix='fa')
+    ).add_to(m)
+    
     # Add trajectories to map
     for i, trajectory in enumerate(trajectories):
         if len(trajectory) < 1:  # Skip empty trajectories
@@ -103,7 +140,7 @@ def create_map(trajectories):
             <div style="width: 200px;">
                 <b>Single Point {i+1}</b><br>
                 <b>Callsign:</b> {point['callsign']}<br>
-                <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/{start_point['registration']}" target="_blank">{start_point['registration']}</a><br>
+                <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/{point['registration']}" target="_blank">{point['registration']}</a><br>
                 <b>Aircraft Type:</b> {point['aircraft_type']}<br>
                 <b>Timestamp:</b> {point['timestamp']}<br>
                 <b>Altitude:</b> {point['altitude']} ft<br>
@@ -191,13 +228,16 @@ def create_map(trajectories):
     # Add legend for altitude colors
     legend_html = '''
     <div style="position: fixed; 
-                top: 10px; right: 10px; width: 150px; height: 90px; 
+                top: 10px; right: 10px; width: 150px; height: 130px; 
                 background-color: white; border:2px solid grey; z-index:9999; 
                 font-size:12px; padding: 10px;">
     <p><b>Altitude Legend</b></p>
     <p><i class="fa fa-square" style="color:green"></i> 0 ft</p>
     <p><i class="fa fa-square" style="color:red"></i> 10,000 ft</p>
     <p>Gradient: Low → High</p>
+    <hr>
+    <p><b>Surveillance area</b></p>
+    <p><i class="fa fa-circle-o" style="color:black"></i> ''' + f'{RADIUS} NM' + '''</p>
     </div>
     '''
     m.get_root().html.add_child(folium.Element(legend_html))
@@ -223,6 +263,7 @@ def main():
         output_file = 'aircraft_trajectories_map.html'
         map_object.save(output_file)
         print(f"Map saved as {output_file}")
+        print(f"Reference circle: {RADIUS} NM radius centered on ({LAT}, {LON})")
         
         # Print trajectory statistics
         print("\nTrajectory Statistics:")
