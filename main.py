@@ -164,5 +164,5 @@ if __name__ == "__main__":
     print(f"Format: {header}")
 
     while True:
-        delay = 10 if check_aircraft() else 60
+        delay = 10 if check_aircraft() else 40
         time.sleep(delay)

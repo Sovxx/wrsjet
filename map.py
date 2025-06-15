@@ -7,8 +7,8 @@ def parse_timestamp(timestamp_str):
     """Parse timestamp string to datetime object"""
     return datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
 
-def get_altitude_color(altitude, min_alt=0, max_alt=10000):
-    """Generate color based on altitude (green=0ft, red=10000ft)"""
+def get_altitude_color(altitude, min_alt=0, max_alt=6000):
+    """Generate color based on altitude (green=0ft, red=6000ft)"""
     if altitude <= min_alt:
         return '#00FF00'  # Green
     elif altitude >= max_alt:
@@ -148,7 +148,7 @@ def create_map(trajectories):
         <div style="width: 200px;">
             <b>Trajectory {i+1}</b><br>
             <b>Callsign:</b> {start_point['callsign']}<br>
-            <b>Registration:</b> {start_point['registration']}<br>
+            <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/{start_point['registration']}" target="_blank">{start_point['registration']}</a><br>
             <b>Aircraft Type:</b> {start_point['aircraft_type']}<br>
             <b>Start Time:</b> {start_point['timestamp']}<br>
             <b>End Time:</b> {end_point['timestamp']}<br>
