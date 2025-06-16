@@ -23,6 +23,12 @@ def parse_timestamp(timestamp_str):
 
 def get_altitude_color(altitude, min_alt=0, max_alt=6000):
     """Generate color based on altitude (green=0ft, red=6000ft)"""
+
+    if pd.isna(altitude) or altitude is None:
+        return '#808080'  # Gris pour les valeurs manquantes
+    
+    altitude = float(altitude)
+
     if altitude <= min_alt:
         return '#00FF00'  # Green
     elif altitude >= max_alt:
@@ -72,12 +78,12 @@ def create_aircraft_trajectories(csv_file_path):
                     if len(current_trajectory) >= 1:  # Save even single points
                         trajectories.append(current_trajectory.copy())
                     current_trajectory = []
-            
+
             # Add current point to trajectory
             current_trajectory.append({
                 'lat': row['lat'],
                 'lon': row['lon'],
-                'altitude': row['alt'],
+                'altitude': row['alt'] if pd.notna(row['alt']) else 0,
                 'timestamp': row['timestamp'],
                 'callsign': row['callsign'] if pd.notna(row['callsign']) else 'N/A',
                 'registration': row['regis'] if pd.notna(row['regis']) else 'N/A',
@@ -186,7 +192,9 @@ def create_map(trajectories):
         # Create popup content with trajectory information
         start_point = trajectory[0]
         end_point = trajectory[-1]
-        avg_altitude = sum(point['altitude'] for point in trajectory) / len(trajectory)
+        
+        valid_altitudes = [point['altitude'] for point in trajectory if not pd.isna(point['altitude'])]
+        avg_altitude = sum(valid_altitudes) / len(valid_altitudes) if valid_altitudes else 0
         
         popup_content = f"""
         <div style="width: 200px;">
