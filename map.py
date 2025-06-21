@@ -2,6 +2,7 @@ import configparser
 import pandas as pd
 import folium
 from datetime import datetime, timedelta
+import locale
 import json
 
 config = configparser.ConfigParser()
@@ -23,7 +24,6 @@ def parse_timestamp(timestamp_str):
 
 def get_altitude_color(altitude, min_alt=0, max_alt=6000):
     """Generate color based on altitude (green=0ft, red=6000ft)"""
-
     if pd.isna(altitude) or altitude is None:
         return '#808080'  # Gris pour les valeurs manquantes
     
@@ -44,16 +44,36 @@ def nautical_miles_to_meters(nm):
     """Convert nautical miles to meters"""
     return nm * 1852  # 1 nautical mile = 1852 meters
 
-def create_aircraft_trajectories(csv_file_path):
+def get_available_dates(csv_file_path):
+    """Get list of available dates from CSV data"""
+    try:
+        df = pd.read_csv(csv_file_path)
+        df['datetime'] = df['timestamp'].apply(parse_timestamp)
+        df['date'] = df['datetime'].dt.date
+        available_dates = sorted(df['date'].unique(), reverse=True)
+        return available_dates
+    except Exception as e:
+        print(f"Error reading dates from CSV: {e}")
+        return []
+
+def create_aircraft_trajectories(csv_file_path, selected_date=None):
     """
     Create aircraft trajectories from CSV data
     Split trajectories when gap > 30 minutes between positions
+    Filter by date if specified
     """
     # Read CSV data
     df = pd.read_csv(csv_file_path)
     
     # Parse timestamps
     df['datetime'] = df['timestamp'].apply(parse_timestamp)
+    df['date'] = df['datetime'].dt.date
+    
+    # Filter by date if specified
+    if selected_date:
+        df = df[df['date'] == selected_date]
+        if df.empty:
+            return []
     
     # Sort by aircraft identifier and timestamp
     df['aircraft_id'] = df['hex']  # Use hex code as unique aircraft identifier
@@ -97,11 +117,25 @@ def create_aircraft_trajectories(csv_file_path):
     
     return trajectories
 
-def create_map(trajectories):
-    """Create Folium map with aircraft trajectories"""
+def create_map_with_filter(csv_file_path):
+    """Create Folium map with date filter and aircraft trajectories"""
+    # Get available dates
+    available_dates = get_available_dates(csv_file_path)
+    
+    if not available_dates:
+        print("No data available")
+        return None
+    
+    # Create initial trajectories (all data)
+    all_trajectories = create_aircraft_trajectories(csv_file_path)
+    
+    if not all_trajectories:
+        print("No trajectories found")
+        return None
+    
     # Calculate map center
-    all_lats = [point['lat'] for traj in trajectories for point in traj]
-    all_lons = [point['lon'] for traj in trajectories for point in traj]
+    all_lats = [point['lat'] for traj in all_trajectories for point in traj]
+    all_lons = [point['lon'] for traj in all_trajectories for point in traj]
     
     center_lat = sum(all_lats) / len(all_lats)
     center_lon = sum(all_lons) / len(all_lons)
@@ -132,111 +166,255 @@ def create_map(trajectories):
         icon=folium.Icon(color='black', icon='crosshairs', prefix='fa')
     ).add_to(m)
     
-    # Add trajectories to map
-    for i, trajectory in enumerate(trajectories):
-        if len(trajectory) < 1:  # Skip empty trajectories
-            continue
-        
-        # Handle single point trajectories
-        if len(trajectory) == 1:
-            point = trajectory[0]
-            
-            # Create a marker for single point
-            popup_content = f"""
-            <div style="width: 200px;">
-                <b>Single Point {i+1}</b><br>
-                <b>Callsign:</b> {point['callsign']}<br>
-                <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/{point['registration']}" target="_blank">{point['registration']}</a><br>
-                <b>Aircraft Type:</b> {point['aircraft_type']}<br>
-                <b>Timestamp:</b> {point['timestamp']}<br>
-                <b>Altitude:</b> {point['altitude']} ft<br>
-            </div>
-            """
-            
-            # Get color based on altitude
-            point_color = get_altitude_color(point['altitude'])
-            
-            folium.CircleMarker(
-                location=[point['lat'], point['lon']],
-                radius=8,
-                popup=folium.Popup(popup_content, max_width=300),
-                color=point_color,
-                fill=True,
-                fillColor=point_color,
-                fillOpacity=0.8
-            ).add_to(m)
-            
-            continue
-        
-        # Create segments with individual colors based on altitude
-        for j in range(len(trajectory) - 1):
-            start_point = trajectory[j]
-            end_point = trajectory[j + 1]
-            
-            # Use average altitude of the two points for segment color
-            segment_altitude = (start_point['altitude'] + end_point['altitude']) / 2
-            segment_color = get_altitude_color(segment_altitude)
-            
-            # Create segment coordinates
-            segment_coords = [[start_point['lat'], start_point['lon']], 
-                            [end_point['lat'], end_point['lon']]]
-            
-            # Create polyline for this segment
-            folium.PolyLine(
-                segment_coords,
-                weight=3,
-                color=segment_color,
-                opacity=0.8
-            ).add_to(m)
-        
-        # Create popup content with trajectory information
-        start_point = trajectory[0]
-        end_point = trajectory[-1]
-        
-        valid_altitudes = [point['altitude'] for point in trajectory if not pd.isna(point['altitude'])]
-        avg_altitude = sum(valid_altitudes) / len(valid_altitudes) if valid_altitudes else 0
-        
-        popup_content = f"""
-        <div style="width: 200px;">
-            <b>Trajectory {i+1}</b><br>
-            <b>Callsign:</b> {start_point['callsign']}<br>
-            <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/{start_point['registration']}" target="_blank">{start_point['registration']}</a><br>
-            <b>Aircraft Type:</b> {start_point['aircraft_type']}<br>
-            <b>Start Time:</b> {start_point['timestamp']}<br>
-            <b>End Time:</b> {end_point['timestamp']}<br>
-            <b>Avg Altitude:</b> {avg_altitude:.0f} ft<br>
-            <b>Points:</b> {len(trajectory)}
+    # Create JavaScript data for all trajectories grouped by date
+    trajectories_by_date = {}
+    for date in available_dates:
+        date_trajectories = create_aircraft_trajectories(csv_file_path, date)
+        trajectories_by_date[str(date)] = date_trajectories
+    
+    # Convert trajectories to JSON format for JavaScript
+    trajectories_json = {}
+    for date_str, trajectories in trajectories_by_date.items():
+        trajectories_json[date_str] = []
+        for traj in trajectories:
+            trajectory_data = {
+                'points': [{'lat': p['lat'], 'lon': p['lon'], 'altitude': p['altitude'], 
+                           'timestamp': p['timestamp'], 'callsign': p['callsign'],
+                           'registration': p['registration'], 'aircraft_type': p['aircraft_type']} 
+                          for p in traj]
+            }
+            trajectories_json[date_str].append(trajectory_data)
+    
+    # Add initial trajectories (first date)
+    initial_date = str(available_dates[0])
+    add_trajectories_to_map(m, trajectories_by_date[initial_date])
+    
+    # Create date filter panel
+    locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
+
+    date_options = ''.join([
+        f'<option value="{date}">{date.strftime("%A %d/%m/%Y")}</option>' 
+        for date in [datetime.strptime(str(d), '%Y-%m-%d').date() for d in available_dates]
+    ])
+    
+    filter_panel_html = f'''
+    <div id="date-filter-panel" style="
+        position: fixed;
+        top: 100px;
+        left: 10px;
+        width: 250px;
+        background-color: white;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        padding: 15px;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        font-family: Arial, sans-serif;
+    ">
+        <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">Filter by Date</h4>
+        <div style="margin-bottom: 10px;">
+            <label for="date-select" style="display: block; margin-bottom: 5px; font-weight: bold;">
+                Select a date:
+            </label>
+            <select id="date-select" style="
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-size: 14px;
+            ">
+                <option value="all">All dates</option>
+                {date_options}
+            </select>
         </div>
-        """
+        <div id="flight-count" style="
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            padding: 5px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        ">
+            Tracks displayed: <span id="count">0</span>
+        </div>
+    </div>
+    '''
+    
+    # Add JavaScript for filtering
+    filter_script = f'''
+    <script>
+        var trajectoryData = {json.dumps(trajectories_json)};
+        var allTrajectoryLayers = [];
+        var currentLayers = [];
         
-        # Add popup to the middle of the trajectory
-        mid_idx = len(trajectory) // 2
-        mid_point = trajectory[mid_idx]
+        function getAltitudeColor(altitude) {{
+            if (altitude === null || altitude === undefined) return '#808080';
+            if (altitude <= 0) return '#00FF00';
+            if (altitude >= 6000) return '#FF0000';
+            
+            var ratio = altitude / 6000;
+            var red = Math.floor(255 * ratio);
+            var green = Math.floor(255 * (1 - ratio));
+            return '#' + red.toString(16).padStart(2, '0') + green.toString(16).padStart(2, '0') + '00';
+        }}
         
-        folium.Marker(
-            location=[mid_point['lat'], mid_point['lon']],
-            popup=folium.Popup(popup_content, max_width=300),
-            icon=folium.Icon(color='blue', icon='plane', prefix='fa')
-        ).add_to(m)
+        function clearTrajectories() {{
+            currentLayers.forEach(function(layer) {{
+                {m.get_name()}.removeLayer(layer);
+            }});
+            currentLayers = [];
+        }}
         
-        # Add start and end markers
-        folium.CircleMarker(
-            location=[trajectory[0]['lat'], trajectory[0]['lon']],
-            radius=5,
-            popup=f"Start - Alt: {trajectory[0]['altitude']} ft",
-            color='green',
-            fill=True,
-            fillColor='green'
-        ).add_to(m)
+        function addTrajectoryToMap(trajectory) {{
+            var points = trajectory.points;
+            if (points.length === 0) return;
+            
+            if (points.length === 1) {{
+                // Single point
+                var point = points[0];
+                var popup = `
+                    <div style="width: 200px;">
+                        <b>Point unique</b><br>
+                        <b>Callsign:</b> ${{point.callsign}}<br>
+                        <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/${{point.registration}}" target="_blank">${{point.registration}}</a><br>
+                        <b>Aircraft Type:</b> ${{point.aircraft_type}}<br>
+                        <b>Timestamp:</b> ${{point.timestamp}}<br>
+                        <b>Altitude:</b> ${{point.altitude}} ft<br>
+                    </div>
+                `;
+                
+                var marker = L.circleMarker([point.lat, point.lon], {{
+                    radius: 8,
+                    color: getAltitudeColor(point.altitude),
+                    fill: true,
+                    fillColor: getAltitudeColor(point.altitude),
+                    fillOpacity: 0.8
+                }}).bindPopup(popup);
+                
+                marker.addTo({m.get_name()});
+                currentLayers.push(marker);
+                return;
+            }}
+            
+            // Multiple points - create segments
+            for (var i = 0; i < points.length - 1; i++) {{
+                var startPoint = points[i];
+                var endPoint = points[i + 1];
+                var avgAltitude = (startPoint.altitude + endPoint.altitude) / 2;
+                
+                var polyline = L.polyline([
+                    [startPoint.lat, startPoint.lon],
+                    [endPoint.lat, endPoint.lon]
+                ], {{
+                    color: getAltitudeColor(avgAltitude),
+                    weight: 3,
+                    opacity: 0.8
+                }});
+                
+                polyline.addTo({m.get_name()});
+                currentLayers.push(polyline);
+            }}
+            
+            // Add trajectory info marker
+            var midPoint = points[Math.floor(points.length / 2)];
+            var startPoint = points[0];
+            var endPoint = points[points.length - 1];
+            
+            var validAltitudes = points.filter(p => p.altitude !== null && p.altitude !== undefined);
+            var avgAltitude = validAltitudes.length > 0 ? 
+                validAltitudes.reduce((sum, p) => sum + p.altitude, 0) / validAltitudes.length : 0;
+            
+            var popup = `
+                <div style="width: 200px;">
+                    <b>Trajectoire</b><br>
+                    <b>Callsign:</b> ${{startPoint.callsign}}<br>
+                    <b>Registration:</b> <a href="https://www.flightradar24.com/data/aircraft/${{startPoint.registration}}" target="_blank">${{startPoint.registration}}</a><br>
+                    <b>Aircraft Type:</b> ${{startPoint.aircraft_type}}<br>
+                    <b>Start Time:</b> ${{startPoint.timestamp}}<br>
+                    <b>End Time:</b> ${{endPoint.timestamp}}<br>
+                    <b>Avg Altitude:</b> ${{Math.round(avgAltitude)}} ft<br>
+                    <b>Points:</b> ${{points.length}}
+                </div>
+            `;
+            
+            var infoMarker = L.marker([midPoint.lat, midPoint.lon]).bindPopup(popup);
+            
+            infoMarker.addTo({m.get_name()});
+            currentLayers.push(infoMarker);
+            
+            // Start marker
+            var startMarker = L.circleMarker([startPoint.lat, startPoint.lon], {{
+                radius: 5,
+                color: 'green',
+                fill: true,
+                fillColor: 'green'
+            }}).bindPopup(`Start - Alt: ${{startPoint.altitude}} ft`);
+            
+            startMarker.addTo({m.get_name()});
+            currentLayers.push(startMarker);
+            
+            // End marker
+            var endMarker = L.circleMarker([endPoint.lat, endPoint.lon], {{
+                radius: 5,
+                color: 'red',
+                fill: true,
+                fillColor: 'red'
+            }}).bindPopup(`End - Alt: ${{endPoint.altitude}} ft`);
+            
+            endMarker.addTo({m.get_name()});
+            currentLayers.push(endMarker);
+        }}
         
-        folium.CircleMarker(
-            location=[trajectory[-1]['lat'], trajectory[-1]['lon']],
-            radius=5,
-            popup=f"End - Alt: {trajectory[-1]['altitude']} ft",
-            color='red',
-            fill=True,
-            fillColor='red'
-        ).add_to(m)
+        function updateMap(selectedDate) {{
+            clearTrajectories();
+            
+            var trajectoriesToShow = [];
+            if (selectedDate === 'all') {{
+                // Show all trajectories
+                Object.values(trajectoryData).forEach(function(dateTrajectories) {{
+                    trajectoriesToShow = trajectoriesToShow.concat(dateTrajectories);
+                }});
+            }} else {{
+                trajectoriesToShow = trajectoryData[selectedDate] || [];
+            }}
+            
+            trajectoriesToShow.forEach(function(trajectory) {{
+                addTrajectoryToMap(trajectory);
+            }});
+            
+            // Update counter
+            document.getElementById('count').textContent = trajectoriesToShow.length;
+        }}
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {{
+            var dateSelect = document.getElementById('date-select');
+            if (dateSelect) {{
+                dateSelect.addEventListener('change', function() {{
+                    updateMap(this.value);
+                }});
+                
+                // Initialize with first date
+                updateMap('{initial_date}');
+            }}
+        }});
+        
+        // For maps that load after DOM
+        setTimeout(function() {{
+            var dateSelect = document.getElementById('date-select');
+            if (dateSelect) {{
+                dateSelect.addEventListener('change', function() {{
+                    updateMap(this.value);
+                }});
+                updateMap('{initial_date}');
+            }}
+        }}, 1000);
+    </script>
+    '''
+    
+    # Add the filter panel and script to the map
+    m.get_root().html.add_child(folium.Element(filter_panel_html))
+    m.get_root().html.add_child(folium.Element(filter_script))
     
     # Add legend for altitude colors
     legend_html = '''
@@ -257,38 +435,34 @@ def create_map(trajectories):
     
     return m
 
+def add_trajectories_to_map(m, trajectories):
+    """Helper function to add trajectories to existing map (for initial load)"""
+    # This is used for the initial load - the JavaScript will handle updates
+    pass
+
 def main(verbose=True):
-    """Main function to process CSV and create map"""
-    # Replace 'your_data.csv' with your actual CSV file path
+    """Main function to process CSV and create map with date filter"""
     csv_file_path = 'records.csv'
     
     try:
-        # Create trajectories from CSV data
+        # Create map with date filter
         if verbose:
-            print("Processing CSV data...")
-        trajectories = create_aircraft_trajectories(csv_file_path)
-        if verbose:
-            print(f"Created {len(trajectories)} trajectories")
+            print("Processing CSV data and creating interactive map...")
         
-        # Create map
-        if verbose:
-            print("Creating map...")
-        map_object = create_map(trajectories)
+        map_object = create_map_with_filter(csv_file_path)
+        
+        if map_object is None:
+            if verbose:
+                print("Failed to create map - no data found")
+            return
         
         # Save map
-        output_file = 'aircraft_trajectories_map.html'
+        output_file = 'aircraft_trajectories_map_with_filter.html'
         map_object.save(output_file)
         if verbose:
-            print(f"Map saved as {output_file}")
+            print(f"Interactive map saved as {output_file}")
             print(f"Reference circle: {RADIUS} NM radius centered on ({LAT}, {LON})")
-        
-        # Print trajectory statistics
-        if verbose:
-            print("\nTrajectory Statistics:")
-            for i, traj in enumerate(trajectories):
-                print(f"Trajectory {i+1}: {len(traj)} points, "
-                      f"Callsign: {traj[0]['callsign']}, "
-                      f"Registration: {traj[0]['registration']}")
+            print("Use the date filter panel on the left to filter flights by date")
         
     except FileNotFoundError:
         if verbose:
@@ -302,8 +476,8 @@ if __name__ == "__main__":
     main()
 
 # Example of how to use with your specific data:
-# Save your CSV data as 'aircraft_data.csv' in the same directory as this script
-# The script will automatically process it and create 'aircraft_trajectories_map.html'
+# Save your CSV data as 'records.csv' in the same directory as this script
+# The script will automatically process it and create 'aircraft_trajectories_map_with_filter.html'
 
 # CSV Header expected:
 # timestamp,callsign,regis,hex,type,desc,alt,vspeed,lat,lon,track,dist,azimuth
