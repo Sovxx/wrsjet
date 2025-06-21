@@ -56,6 +56,18 @@ def get_available_dates(csv_file_path):
         print(f"Error reading dates from CSV: {e}")
         return []
 
+def get_last_detection(csv_file_path):
+    """Get the timestamp of the last aircraft detection"""
+    try:
+        df = pd.read_csv(csv_file_path)
+        df['datetime'] = df['timestamp'].apply(parse_timestamp)
+        # Get the most recent timestamp
+        last_detection = df['datetime'].max()
+        return last_detection
+    except Exception as e:
+        print(f"Error getting last detection: {e}")
+        return None
+
 def create_aircraft_trajectories(csv_file_path, selected_date=None):
     """
     Create aircraft trajectories from CSV data
@@ -125,6 +137,9 @@ def create_map_with_filter(csv_file_path):
     if not available_dates:
         print("No data available")
         return None
+    
+    # Get last detection timestamp
+    last_detection = get_last_detection(csv_file_path)
     
     # Create initial trajectories (all data)
     all_trajectories = create_aircraft_trajectories(csv_file_path)
@@ -202,7 +217,7 @@ def create_map_with_filter(csv_file_path):
         position: fixed;
         top: 100px;
         left: 10px;
-        width: 250px;
+        width: 220px;
         background-color: white;
         border: 2px solid #ccc;
         border-radius: 8px;
@@ -416,19 +431,25 @@ def create_map_with_filter(csv_file_path):
     m.get_root().html.add_child(folium.Element(filter_panel_html))
     m.get_root().html.add_child(folium.Element(filter_script))
     
-    # Add legend for altitude colors
-    legend_html = '''
+    # Format last detection timestamp
+    last_detection_str = "N/A"
+    if last_detection:
+        last_detection_str = last_detection.strftime("%d/%m/%Y %H:%M:%S")
+    
+    # Add legend for altitude colors with last detection
+    legend_html = f'''
     <div style="position: fixed; 
-                top: 10px; right: 10px; width: 150px; height: 130px; 
+                top: 10px; right: 10px; width: 150px; height: 232px; 
                 background-color: white; border:2px solid grey; z-index:9999; 
                 font-size:12px; padding: 10px;">
     <p><b>Altitude Legend</b></p>
     <p><i class="fa fa-square" style="color:red"></i> 6,000+ ft</p>
     <p><i class="fa fa-square" style="color:green"></i> 0 ft</p>
     <p>Gradient: Low → High</p>
-    <hr>
     <p><b>Surveillance area</b></p>
-    <p><i class="fa fa-circle-o" style="color:black"></i> ''' + f'{RADIUS} NM' + '''</p>
+    <p><i class="fa fa-circle-o" style="color:black"></i> {RADIUS} NM</p>
+    <p><b>Last detection</b></p>
+    <p>{last_detection_str}</p>
     </div>
     '''
     m.get_root().html.add_child(folium.Element(legend_html))
@@ -443,7 +464,7 @@ def add_trajectories_to_map(m, trajectories):
 def main(verbose=True):
     """Main function to process CSV and create map with date filter"""
     csv_file_path = 'records.csv'
-    
+
     try:
         # Create map with date filter
         if verbose:
